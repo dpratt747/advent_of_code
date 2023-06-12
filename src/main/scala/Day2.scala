@@ -5,7 +5,12 @@ import scala.io.Source
 
 object Day2 extends ZIOAppDefault {
 
-  sealed trait Hand {
+  private sealed trait Outcome
+  private case object Win extends Outcome
+  private case object Draw extends Outcome
+  private case object Lose extends Outcome
+
+  private sealed trait Hand {
     def value: Int
   }
   private case object Rock extends Hand {
@@ -18,7 +23,19 @@ object Day2 extends ZIOAppDefault {
     override def value: Int = 3
   }
 
-  private def compare: (Hand, Hand) => Int = {
+  private def getTargetHand: (Hand, Outcome) => Hand = {
+    case (Rock, Lose) => Scissors
+    case (Rock, Draw) => Rock
+    case (Rock, Win) => Paper
+    case (Paper, Lose) => Rock
+    case (Paper, Draw) => Paper
+    case (Paper, Win) => Scissors
+    case (Scissors, Lose) => Paper
+    case (Scissors, Win) => Rock
+    case (Scissors, Draw) => Scissors
+  }
+
+  private def compareHands: (Hand, Hand) => Int = {
     case (Rock, Scissors) => 0
     case (Rock, Rock) => 3
     case (Rock, Paper) => 6
@@ -34,22 +51,27 @@ object Day2 extends ZIOAppDefault {
 //      val input = ZIO.attempt(Source.fromResource("advent_of_code_day_2_input_test.txt").getLines().toList)
     val input = ZIO.attempt(Source.fromResource("advent_of_code_day_2_input.txt").getLines().toList)
 
-    val index: Map[Char, Hand] = Map(
+    val firstColumnLookup: Map[Char, Hand] = Map(
       'A' -> Rock,
       'B' -> Paper,
-      'C' -> Scissors,
-      'X' -> Rock,
-      'Y' -> Paper,
-      'Z' -> Scissors
+      'C' -> Scissors
+    )
+
+    val secondColumnLookup: Map[Char, Outcome] = Map(
+      'X' -> Lose,
+      'Y' -> Draw,
+      'Z' -> Win
     )
 
     input.map { lines =>
 
       val parse = lines.map(_.split(" ")).map{ case Array(a, b) =>
 
-        (index.get(a.charAt(0)), index.get(b.charAt(0))) match {
-          case (Some(a), Some(b)) => compare(a, b) + b.value
-          case _ => 0
+        (firstColumnLookup.get(a.charAt(0)), secondColumnLookup.get(b.charAt(0))) match {
+          case (Some(playerOnesHand), Some(outcome)) =>
+            val targetHand = getTargetHand(playerOnesHand, outcome)
+            compareHands(playerOnesHand, targetHand) + targetHand.value
+          case _ => 0 // should not happen
         }
       }
 
