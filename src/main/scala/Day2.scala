@@ -65,7 +65,7 @@ object Day2 extends ZIOAppDefault {
 
     input.map { lines =>
 
-      val parse = lines.map(_.split(" ")).map{ case Array(a, b) =>
+      lines.map(_.split(" ")).map{ case Array(a, b) =>
 
         (firstColumnLookup.get(a.charAt(0)), secondColumnLookup.get(b.charAt(0))) match {
           case (Some(playerOnesHand), Some(outcome)) =>
@@ -75,8 +75,7 @@ object Day2 extends ZIOAppDefault {
         }
       }
 
-      println(parse.sum)
-    }
+    }.tap(list => Console.printLine(list.sum))
   }
 
 }
